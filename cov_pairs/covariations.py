@@ -32,6 +32,7 @@ import time
 import bioint
 import numpy
 import pandas
+import biopython
 from bioint.utils.exceptions import CovariationsException
 from bioint.utils import arg_utils, path_utils
 
@@ -332,6 +333,10 @@ def run_covariations(input_file, out, db, threads, mode):
         mode (str): Mode to be used
     """
     unp_id = os.path.basename(input_file).split(".")[0]
+    fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
+    name, sequence = fasta.id, str(fasta.seq)
+    print(name,sequence)
+    
     logging.info(f"Getting covariations for: {unp_id}")
 
     if mode == "msa":
