@@ -311,8 +311,8 @@ def get_msa(input_file, unp_id, out, db, threads):
     run_hhfilter(unp_id, out)
 
 
-def get_covariation_info(unp_id, out, threads):
-    covariation_pairs = get_covariation_pairs(unp_id, out, threads)
+def get_covariation_info(unp_id, sequence, out, threads):
+    covariation_pairs = get_covariation_pairs(unp_id,sequence, out, threads)
 
     df = pandas.DataFrame(
         covariation_pairs, columns=["Residue A", "Residue B", "Score", "Probability"]
@@ -347,7 +347,7 @@ def run_covariations(input_file, out, db, threads, mode):
         get_covariation_info(unp_id,sequence, out, threads)
     else:
         get_msa(input_file, unp_id, out, db, threads)
-        get_covariation_info(unp_id, out, threads)
+        get_covariation_info(unp_id, sequence, out, threads)
 
     logging.info("Finished. Time for beer now?")
 
