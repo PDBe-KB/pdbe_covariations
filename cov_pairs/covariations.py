@@ -34,7 +34,6 @@ import numpy
 import pandas
 import Bio
 from Bio import SeqIO
-import biopython
 from bioint.utils.exceptions import CovariationsException
 from bioint.utils import arg_utils, path_utils
 
