@@ -335,7 +335,7 @@ def run_covariations(input_file, out, db, threads, mode):
     """
     unp_id = os.path.basename(input_file).split(".")[0]
     fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
-    name, sequence = fasta.id, str(fasta.seq)
+    name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
     print(name,sequence)
     
     logging.info(f"Getting covariations for: {unp_id}")
