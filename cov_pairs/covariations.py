@@ -216,7 +216,7 @@ def run_hhfilter(unp_id, out):
     return out_file
 
 
-def get_covariation_pairs(unp_id, out, threads):
+def get_covariation_pairs(unp_id,sequence, out, threads):
     """Calculate residue pairs with covariation score and probability
     given the filtered MSA.
 
@@ -240,7 +240,7 @@ def get_covariation_pairs(unp_id, out, threads):
 
     for i in range(sequence_length):
         for j in range(i + sequence_separation, sequence_length):
-            covariation_pairs.append([i + 1, j + 1, score[i, j], probability[i, j]])
+            covariation_pairs.append([i + 1, j + 1,sequence[i],sequence[j], score[i, j], probability[i, j]])
 
     covariation_pairs.sort(key=lambda x: x[3], reverse=True)
 
@@ -336,7 +336,7 @@ def run_covariations(input_file, out, db, threads, mode):
     unp_id = os.path.basename(input_file).split(".")[0]
     fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
     name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
-    print(name,sequence)
+    
     
     logging.info(f"Getting covariations for: {unp_id}")
 
@@ -344,7 +344,7 @@ def run_covariations(input_file, out, db, threads, mode):
         get_msa(input_file, unp_id, out, db, threads)
 
     elif mode == "cov":
-        get_covariation_info(unp_id, out, threads)
+        get_covariation_info(unp_id,sequence, out, threads)
     else:
         get_msa(input_file, unp_id, out, db, threads)
         get_covariation_info(unp_id, out, threads)
