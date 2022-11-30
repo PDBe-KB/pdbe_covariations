@@ -315,7 +315,7 @@ def get_covariation_info(unp_id, sequence, out, threads):
     covariation_pairs = get_covariation_pairs(unp_id,sequence,out,threads)
 
     df = pandas.DataFrame(
-        covariation_pairs, columns=["unp_id,""Residue A", "Residue B","Residue name A","Residue mame B", "Score", "Probability"]
+        covariation_pairs, columns=["unp_id","Residue A", "Residue B","Residue name A","Residue mame B", "Score", "Probability"]
     )
     out_file = out / f"{unp_id}_cov.csv"
     df[df["Probability"] >= THRESHOLD].to_csv(out_file)
