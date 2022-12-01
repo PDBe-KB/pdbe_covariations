@@ -237,12 +237,12 @@ def get_covariation_pairs(unp_id,sequence,out,threads):
     covariation_pairs = []
     sequence_separation = 5  # to exclude short-range predictions
     sequence_length = score.shape[0]  # sequence length
-    print('GDL sequence:',sequence)
+    
     for i in range(sequence_length):
         for j in range(i + sequence_separation, sequence_length):
             if(probability[i, j]>=THRESHOLD):
                 #covariation_pairs.append([i + 1, j + 1,score[i, j], probability[i, j]])
-                covariation_pairs.append([unp_id, i + 1, j + 1,sequence[i],sequence[j], score[i, j], probability[i, j]])
+                covariation_pairs.append([unp_id, i + 1,sequence[i],unp_id,j+1,sequence[j], score[i, j], probability[i, j]])
 
     covariation_pairs.sort(key=lambda x: x[3], reverse=True)
 
@@ -315,10 +315,10 @@ def get_msa(input_file, unp_id, out, db, threads):
 
 def get_covariation_info(unp_id, sequence, out, threads):
     covariation_pairs = get_covariation_pairs(unp_id,sequence,out,threads)
-    print(covariation_pairs)
+    
     df = pandas.DataFrame(
          #covariation_pairs,columns=["Residue A", "Residue B", "Score", "Probability"]
-         covariation_pairs, columns=["unp_id","Residue A", "Residue B","Res name A","Res mame B", "Score", "Probability"]
+         covariation_pairs, columns=["unp_acc A","unp_num A","Residue A", "unp_acc B","unp_num B","Residue B", "Score", "Probability"]
     )
     out_file = out / f"{unp_id}_cov.csv"
     df[df["Probability"] >= THRESHOLD].to_csv(out_file)
