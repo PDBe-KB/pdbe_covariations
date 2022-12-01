@@ -75,7 +75,7 @@ The process is as follows:
 7. The process will then read through scores and probabilities files and output a CSV file with the covariation pairs (with probability larger than 0.5):
    - UNP_ACC_cov.csv (UNP_ACC: uniprot id)
    
-## Expected output files
+## Expected output CSV file
 
 The output csv file looks as follows:
 ```
