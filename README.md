@@ -62,13 +62,13 @@ Optional:
 The process is as follows:
 
 1. The process first reads an input file which contains a sequence in FASTA format for a uniprot accession. The input file can also be a pre-existing MSA:
-   - UNP_ACC.fasta  (the name of the file UNP_ACC should be the uniprot accession number)
-   - UNP_ACC.a3m ( pre-existing MSA file, the file should be named as the uniprot accession number UNP_acc)
+   - UNP_acc.fasta  (the name of the file UNP_ACC should be the uniprot accession number)
+   - UNP_acc.a3m ( pre-existing MSA file, the file should be named as the uniprot accession number UNP_acc)
    
 2. Next, if -c flag is not used,  the process runs hhblits to perform multiple sequence analysis (MSA) and generates a file:
    - UNP_acc.a3m (where the name of the file UNP_acc is the uniprot accession number)
-3. Next step, the process runs hhfilter to filter out hits from MSA and generates a new file :
-   UNPid_IDENTITY_COVERAGE.a3m (file name:UNP id, identity, coverage)
+3. Next step, the process runs hhfilter to filter out hits from MSA and generates a new file:
+   - UNP_acc_IDENTITY_COVERAGE.a3m (file name:uniprot id, identity, coverage)
 6. Next, the process runs gremlin3 to calculate covariation pairs and outputs two files:
    - UNP_ACC_prob.txt (where UNP_ACC refers to the Uniprot id)
    - UNP_ACC_score.txt (where UNP_ACC refers to the Uniprot id)
@@ -76,6 +76,22 @@ The process is as follows:
    - UNP_ACC_cov.csv (UNP_ACC: uniprot id)
    
 ## Expected output files
+
+The output csv file looks as follows:
+```
+,unp_acc A,unp_num A,Residue A,unp_acc B,unp_num B,Residue B,Score,Probability
+0,F5HCP3,24,L,F5HCP3,39,P,-0.0045671,0.539227
+1,F5HCP3,24,L,F5HCP3,41,W,-0.0045671,0.695802
+2,F5HCP3,24,L,F5HCP3,46,Y,-0.0045671,0.569487
+3,F5HCP3,24,L,F5HCP3,52,A,-0.0045682,0.516928
+4,F5HCP3,24,L,F5HCP3,56,Y,-0.00456711,0.569487
+5,F5HCP3,24,L,F5HCP3,57,C,-0.00456711,0.671099
+6,F5HCP3,24,L,F5HCP3,64,P,-0.00456711,0.507527
+7,F5HCP3,24,L,F5HCP3,71,F,-0.00456711,0.609574
+8,F5HCP3,24,L,F5HCP3,74,F,-0.00319907,0.560582
+9,F5HCP3,24,L,F5HCP3,77,V,-0.00117547,0.509544
+10,F5HCP3,24,L,F5HCP3,87,T,-0.00456711,0.594677
+```
 
 We use [SemVer](https://semver.org) for versioning.
 
