@@ -1,0 +1,2 @@
+[console_scripts]
+covariations = cov_pairs.covariations:main

@@ -1,0 +1,8 @@
+numpy
+requests
+pandas
+gemmi
+
+[tests]
+pytest
+pytest-cov
