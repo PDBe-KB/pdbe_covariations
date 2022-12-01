@@ -68,5 +68,24 @@ The process is as follows:
 2. Next, if -c flag is not used,  the process runs hhblits to perform multiple sequence analysis (MSA) and generates a file:
    - UNP_acc.a3m (where the name of the file UNP_acc is the uniprot accession number)
 3. Next step, the process runs hhfilter to filter out hits from MSA and generates a new file :
-   filtered_file.a3m(unp_id, IDENTITY, COVERAGE)
-6. An output 
+   UNPid_IDENTITY_COVERAGE.a3m (file name:UNP id, identity, coverage)
+6. Next, the process runs gremlin3 to calculate covariation pairs and outputs two files:
+   - UNP_ACC_prob.txt (where UNP_ACC refers to the Uniprot id)
+   - UNP_ACC_score.txt (where UNP_ACC refers to the Uniprot id)
+7. The process will then read through scores and probabilities files and output a CSV file with the covariation pairs (with probability larger than 0.5):
+   - UNP_ACC_cov.csv (UNP_ACC: uniprot id)
+   
+## Expected output files
+
+We use [SemVer](https://semver.org) for versioning.
+
+## Authors
+* [Grisell Diaz Leines](https://github.com/grisell) - Developer
+* [Lukas Pravda](https://github.com/grisell) - Developer
+* [Mihaly Varadi](https://github.com/mvaradi) - Review and management 
+
+See all contributors [here](https://github.com/PDBe-KB/pisa-analysis/graphs/contributors).
+
+## License
+
+See  [LICENSE](https://github.com/PDBe-KB/pisa-analysis/blob/main/LICENSE)
