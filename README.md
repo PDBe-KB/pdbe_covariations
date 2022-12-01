@@ -34,6 +34,23 @@ The process requires environment variables for binaries hhblits, hhfilter and gr
 PATH="$PATH:/your_path/hh-suite/build/bin:$PATH:/your_path/gremlin3/bin"
 
 ```
+Other dependencies can be installed with:
+
+```
+pip install -r requirements.txt
+```
+See  [requirements.txt](https://github.com/PDBe-KB/covariation_pairs/blob/main/requirements.txt)
+
+For development: 
+
+**pre-commit usage**
+
+```
+pip install pre-commit
+pre-commit
+pre-commit install
+```
+
 # Usage
 
 After installing the package, the 'covariation' module can be run in terminal as:
@@ -86,11 +103,6 @@ The output csv file looks as follows:
 3,F5HCP3,24,L,F5HCP3,52,A,-0.0045682,0.516928
 4,F5HCP3,24,L,F5HCP3,56,Y,-0.00456711,0.569487
 5,F5HCP3,24,L,F5HCP3,57,C,-0.00456711,0.671099
-6,F5HCP3,24,L,F5HCP3,64,P,-0.00456711,0.507527
-7,F5HCP3,24,L,F5HCP3,71,F,-0.00456711,0.609574
-8,F5HCP3,24,L,F5HCP3,74,F,-0.00319907,0.560582
-9,F5HCP3,24,L,F5HCP3,77,V,-0.00117547,0.509544
-10,F5HCP3,24,L,F5HCP3,87,T,-0.00456711,0.594677
 ```
 
 We use [SemVer](https://semver.org) for versioning.
