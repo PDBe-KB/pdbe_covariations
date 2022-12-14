@@ -2,11 +2,16 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
+import Bio
+from Bio import SeqIO
+
+import multiprocessing
 import pytest
 from cov_pairs.utils.exceptions import CovariationsException
 from cov_pairs import covariations
 from cov_pairs.utils import path_utils
 
+threads = min(min(8, multiprocessing.cpu_count()), 8)
 
 def test_execute_command_with_log(tmpdir):
     tmp_file = os.path.join(tmpdir, "logfile.txt")
@@ -118,15 +123,19 @@ def test_run_gremlin(args):
 
 
 def test_get_covariation_pairs(test_data_dir, args):
-    probability_file = Path(test_data_dir, "O27725_prob.txt")
-    score_file = Path(test_data_dir, "O27725_score.txt")
-
+    probability_file = Path(test_data_dir, "F5HCP3_prob.txt")
+    score_file = Path(test_data_dir, "F5HCP3_score.txt")
+    input_fasta = Path(test_data_dir, "F5HCP3.fasta")
+    
     file_paths = (probability_file, score_file)
-
+    fasta_sequence = list(SeqIO.parse(input_fasta, "fasta"))
+    name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
+    
     with patch.object(covariations, "run_gremlin", return_value=file_paths):
-        cov_pairs = covariations.get_covariation_pairs("foobar", args.out, args.threads)
+        cov_pairs = covariations.get_covariation_pairs("F5HCP3", sequence,args.out, args.threads)
+        print (cov_pairs)
         assert cov_pairs
         assert len(cov_pairs) > 100
 
         pivot = cov_pairs[0]
-        assert pivot == [13, 64, 0.61129, 0.993326]
+        assert pivot == ["F5HCP3",24,"L","F5HCP3",39,"P",-0.0045671,0.539227]

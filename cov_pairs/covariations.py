@@ -34,8 +34,8 @@ import numpy
 import pandas
 import Bio
 from Bio import SeqIO
-from bioint.utils.exceptions import CovariationsException
-from bioint.utils import arg_utils, path_utils
+from cov_pairs.utils.exceptions import CovariationsException
+from cov_pairs.utils import arg_utils, path_utils
 
 # region mini config
 GREMLIN = "gremlin3"
@@ -45,6 +45,7 @@ HHFILTER = "hhfilter"
 IDENTITY = "90"
 COVERAGE = "75"
 THRESHOLD = 0.5  # Write out only those pairs with probability greated than 0.5
+
 
 # endregion mini config
 
