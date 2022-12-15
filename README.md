@@ -96,13 +96,13 @@ The process is as follows:
 
 The output csv file looks as follows:
 ```
-,unp_acc A,unp_num A,Residue A,unp_acc B,unp_num B,Residue B,Score,Probability
-0,F5HCP3,24,L,F5HCP3,39,P,-0.0045671,0.539227
-1,F5HCP3,24,L,F5HCP3,41,W,-0.0045671,0.695802
-2,F5HCP3,24,L,F5HCP3,46,Y,-0.0045671,0.569487
-3,F5HCP3,24,L,F5HCP3,52,A,-0.0045682,0.516928
-4,F5HCP3,24,L,F5HCP3,56,Y,-0.00456711,0.569487
-5,F5HCP3,24,L,F5HCP3,57,C,-0.00456711,0.671099
+uniprot_accession_a,uniprot_residue_index_a,uniprot_residue_label_a,uniprot_accession_b,uniprot_residue_index_b,uniprot_residue_label_b,covariation_score,covariation_probability
+F5HCP3,24,LEU,F5HCP3,39,PRO,-0.0045671,0.539227
+F5HCP3,24,LEU,F5HCP3,41,TRP,-0.0045671,0.695802
+F5HCP3,24,LEU,F5HCP3,46,TYR,-0.0045671,0.569487
+F5HCP3,24,LEU,F5HCP3,52,ALA,-0.0045682,0.516928
+F5HCP3,24,LEU,F5HCP3,56,TYR,-0.00456711,0.569487
+F5HCP3,24,LEU,F5HCP3,57,CYS,-0.00456711,0.671099
 ```
 
 We use [SemVer](https://semver.org) for versioning.
