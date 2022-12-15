@@ -3,7 +3,7 @@
 This code performs the calculation of covariation pairs from protein sequence. 
 
 The code will: 
-1) Perform multiple sequence aligment (MSD) using [HHSuite](https://github.com/soedinglab/hh-suite)
+1) Perform multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
 2) Calculate covariation pairs using [Gremlin3](https://github.com/gjoni/gremlin3)
 
 # Installation
