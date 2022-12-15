@@ -1,9 +1,12 @@
+Protein residue covariation pipeline
+=
+
 # Basic information
 
-This code performs the calculation of covariation pairs from protein sequence. 
+The code in this repository runs a pipeline that calculates covariation pairs from protein sequence. 
 
-The code will: 
-1) Perform multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
+The main steps of this pipeline: 
+1) Create multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
 2) Calculate covariation pairs using [Gremlin3](https://github.com/gjoni/gremlin3)
 
 # Installation
@@ -24,7 +27,7 @@ HHsuite   https://github.com/soedinglab/hh-suite
 
 Gremlin3  https://github.com/gjoni/gremlin3
 
-The process requires a path to the database with clustered sequences, used for MSA in HH-suite. We use the Uniclust database:
+The process requires a path to a database with clustered sequences, used for MSA in HH-suite. We use the Uniclust database by default:
 
 Uniclust - https://uniclust.mmseqs.com/
 
@@ -53,7 +56,7 @@ pre-commit install
 
 # Usage
 
-After installing the package, the 'covariation' module can be run in terminal as:
+After installing the package, the `covariation` module can be run in terminal as:
 
 ```
 covariation -i fasta_input/MSA_input -d clustered_sequences_database -t no_threads -o output_path
@@ -63,24 +66,24 @@ Required:
 ```
 -i / --input : Path to the input file with FASTA sequence or file with MSA  
 -d /--db     : Path to the database of clustered sequences
--o           : output directory 
+-o           : Output directory 
 ```
 
 Optional:
 
 ```
---debug     :  Turn on debug information
--m / --msa  : run MSA only
--t          :  No. of threads for calculation
+--debug     : Turn on debug information
+-m / --msa  : Run MSA only
+-t          : No. of threads for calculation
 -c / --cov  : Run covariations calculation from pre-existing MSA
 -a / --all  : Run full computation (default)
 ```
 
-The process is as follows:
+# Overview of the process
 
-1. The process first reads an input file which contains a sequence in FASTA format for a uniprot accession. The input file can also be a pre-existing MSA:
-   - UNP_acc.fasta  (the name of the file UNP_ACC should be the uniprot accession number)
-   - UNP_acc.a3m ( pre-existing MSA file, the file should be named as the uniprot accession number UNP_acc)
+1. The process first reads an input file which contains a sequence in FASTA format for a UniProt accession. The input file can also be a pre-existing MSA:
+   - UNP_acc.fasta  (the name of the file UNP_ACC must be the UniProt accession number)
+   - UNP_acc.a3m (pre-existing MSA file, the file must be named as the UniProt accession number UNP_acc)
    
 2. Next, if -c flag is not used,  the process runs hhblits to perform multiple sequence analysis (MSA) and generates a file:
    - UNP_acc.a3m (where the name of the file UNP_acc is the uniprot accession number)
