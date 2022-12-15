@@ -1,7 +1,7 @@
 Protein residue covariation pipeline
 =
 
-# Basic information
+## Basic information
 
 The code in this repository runs a pipeline that calculates covariation pairs from protein sequence. 
 
@@ -9,7 +9,7 @@ The main steps of this pipeline:
 1) Create multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
 2) Calculate covariation pairs using [Gremlin3](https://github.com/gjoni/gremlin3)
 
-# Installation
+## Installation
 
 ```
 git clone https://github.com/PDBe-KB/covariation_pairs
@@ -19,7 +19,7 @@ cd covariation-pairs
 python setup.py install
 ```
 
-# Dependencies
+## Dependencies
 
 The process runs the packages listed below as subprocesses and requires a-priori compilation of:
 
@@ -54,7 +54,7 @@ pre-commit
 pre-commit install
 ```
 
-# Usage
+## Usage
 
 After installing the package, the `covariation` module can be run in terminal as:
 
@@ -79,25 +79,25 @@ Optional:
 -a / --all  : Run full computation (default)
 ```
 
-# Overview of the process
+## Overview of the process
 
 1. The process first reads an input file which contains a sequence in FASTA format for a UniProt accession. The input file can also be a pre-existing MSA:
    - UNP_acc.fasta  (the name of the file UNP_ACC must be the UniProt accession number)
    - UNP_acc.a3m (pre-existing MSA file, the file must be named as the UniProt accession number UNP_acc)
    
-2. Next, if -c flag is not used,  the process runs hhblits to perform multiple sequence analysis (MSA) and generates a file:
-   - UNP_acc.a3m (where the name of the file UNP_acc is the uniprot accession number)
-3. Next step, the process runs hhfilter to filter out hits from MSA and generates a new file:
-   - UNP_acc_IDENTITY_COVERAGE.a3m (file name:uniprot id, identity, coverage)
-6. Next, the process runs gremlin3 to calculate covariation pairs and outputs two files:
-   - UNP_ACC_prob.txt (where UNP_ACC refers to the Uniprot id)
-   - UNP_ACC_score.txt (where UNP_ACC refers to the Uniprot id)
-7. The process will then read through scores and probabilities files and output a CSV file with the covariation pairs (with probability larger than 0.5):
-   - UNP_ACC_cov.csv (UNP_ACC: uniprot id)
+2. Next, if -c flag is not used,  the process runs `hhblits` to create an MSA and generates a file:
+   - UNP_acc.a3m (where the name of the file UNP_acc is the UniProt accession number)
+3. Next step, the process runs `hhfilter` to filter out hits from the MSA and generates a new file:
+   - UNP_acc_IDENTITY_COVERAGE.a3m (file name: UniProt id, identity, coverage)
+6. Then, the process runs `gremlin3` to calculate covariation pairs and outputs two files:
+   - UNP_ACC_prob.txt (where UNP_ACC refers to the UniProt id)
+   - UNP_ACC_score.txt (where UNP_ACC refers to the UniProt id)
+7. Finally, the process reads through scores and probabilities files and outputs a CSV file with the covariation pairs (with probability larger than 0.5):
+   - UNP_ACC_cov.csv (UNP_ACC: UniProt id)
    
 ## Expected output CSV file
 
-The output csv file looks as follows:
+The output CSV file looks as follows:
 ```
 uniprot_accession_a,uniprot_residue_index_a,uniprot_residue_label_a,uniprot_accession_b,uniprot_residue_index_b,uniprot_residue_label_b,covariation_score,covariation_probability
 F5HCP3,24,LEU,F5HCP3,39,PRO,-0.0045671,0.539227
