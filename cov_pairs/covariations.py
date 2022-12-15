@@ -29,11 +29,14 @@ import os
 import subprocess
 import time
 
-import bioint
+import cov_pairs
 import numpy
 import pandas
+
 import Bio
 from Bio import SeqIO
+from Bio.SeqUtils import seq3
+
 from cov_pairs.utils.exceptions import CovariationsException
 from cov_pairs.utils import arg_utils, path_utils
 
@@ -81,7 +84,7 @@ def process_args(args, write_out_parameters=True):
     os.makedirs(args.out, exist_ok=True)
 
     if write_out_parameters:
-        logging.info(f"Running covariations pipeline v. {bioint.__version__}")
+        logging.info(f"Running covariations pipeline v. {cov_pairs.__version__}")
         logging.info("Settings:")
         for k, v in vars(args).items():
             logging.info(f"  {k:25s}{v}")
@@ -243,7 +246,9 @@ def get_covariation_pairs(unp_id,sequence,out,threads):
         for j in range(i + sequence_separation, sequence_length):
             if(probability[i, j]>=THRESHOLD):
                 #covariation_pairs.append([i + 1, j + 1,score[i, j], probability[i, j]])
-                covariation_pairs.append([unp_id, i + 1,sequence[i],unp_id,j+1,sequence[j], score[i, j], probability[i, j]])
+                res1=seq3(sequence[i]).upper()
+                res2=seq3(sequence[j]).upper()
+                covariation_pairs.append([unp_id, i + 1,res1,unp_id,j+1,res2, score[i, j], probability[i, j]])
 
     covariation_pairs.sort(key=lambda x: x[3], reverse=True)
 
@@ -319,10 +324,10 @@ def get_covariation_info(unp_id, sequence, out, threads):
     
     df = pandas.DataFrame(
          #covariation_pairs,columns=["Residue A", "Residue B", "Score", "Probability"]
-         covariation_pairs, columns=["unp_acc A","unp_num A","Residue A", "unp_acc B","unp_num B","Residue B", "Score", "Probability"]
+         covariation_pairs, columns=["uniprot_accession_a","uniprot_residue_index_a","uniprot_residue_label_a", "uniprot_accession_b","uniprot_residue_index_b","uniprot_residue_label_b", "covariation_score", "covariation_probability"]
     )
     out_file = out / f"{unp_id}_cov.csv"
-    df[df["Probability"] >= THRESHOLD].to_csv(out_file)
+    df[df["covariation_probability"] >= THRESHOLD].to_csv(out_file,index=False)
 
     logging.info(f"Covariations were written to: {out_file}")
 

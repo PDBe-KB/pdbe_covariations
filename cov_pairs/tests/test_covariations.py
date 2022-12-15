@@ -138,4 +138,4 @@ def test_get_covariation_pairs(test_data_dir, args):
         assert len(cov_pairs) > 100
 
         pivot = cov_pairs[0]
-        assert pivot == ["F5HCP3",24,"L","F5HCP3",39,"P",-0.0045671,0.539227]
+        assert pivot == ["F5HCP3",24,"LEU","F5HCP3",39,"PRO",-0.0045671,0.539227]
