@@ -1,7 +1,7 @@
 name: Build and publish the package to internal PDBe PyPi registry
 
 env:
-  PACKAGE_NAME: pdbe_complexes
+  PACKAGE_NAME: covariation_pairs
 
 on: [ push ]
 
