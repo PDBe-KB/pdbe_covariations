@@ -1,8 +1,8 @@
+.PHONY: test
+
+default: test
+
 test:
-	pytest
-
-test-cov:
-	pytest --cov=cov_pairs --cov-report=html
-
-clean:
-	rm -rf htmlcov && rm .coverage
+	coverage run -m pytest --junitxml=report.xml
+	coverage xml -o coverage/cobertura-coverage.xml
+	coverage report -m

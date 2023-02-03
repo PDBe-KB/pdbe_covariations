@@ -20,6 +20,7 @@ setup(
         "numpy",
         "requests",
         "pandas",
+	"biopython"
         "gemmi"
     ],
     extras_require={
