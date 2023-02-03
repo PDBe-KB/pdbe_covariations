@@ -80,7 +80,7 @@ def process_args(args, write_out_parameters=True):
         AttributeError: If any of the binaries that should be used for
         the pipeline are not present as part of the $PATH variable.
     """
-    __check_binaries()
+    #__check_binaries()
     os.makedirs(args.out, exist_ok=True)
 
     if write_out_parameters:
