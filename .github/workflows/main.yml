@@ -30,6 +30,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       uses: codecov/codecov-action@v3
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         directory: ./coverage
         file: ./coverage/cobertura-coverage.xml
         flags: unittests
