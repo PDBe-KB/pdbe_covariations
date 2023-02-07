@@ -122,7 +122,8 @@ def test_run_gremlin(args):
         covariations.run_gremlin("foobar", args.out, args.threads)
 
 
-def test_get_covariation_pairs(test_data_dir, args):
+def test_get_covariation_pairs(args):
+    test_data_dir = os.path.join("tests", "data")
     probability_file = Path(test_data_dir, "F5HCP3_prob.txt")
     score_file = Path(test_data_dir, "F5HCP3_score.txt")
     input_fasta = Path(test_data_dir, "F5HCP3.fasta")

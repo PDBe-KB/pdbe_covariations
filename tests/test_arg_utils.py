@@ -4,18 +4,22 @@ from argparse import ArgumentTypeError
 import pytest
 from cov_pairs.utils import arg_utils
 
+def test_path_exists_ok():
 
-def test_path_exists_ok(test_data_dir):
+    test_data_dir = os.path.join("tests","data")
+    
     ok_file = os.path.join(test_data_dir, "O27725_cov.csv")
 
     assert arg_utils.path_exist(ok_file)
 
 
-def test_path_exists_nok(test_data_dir):
+def test_path_exists_nok():
+    
+    test_data_dir = os.path.join("tests","data")
+    
     no_file = os.path.join(test_data_dir, "foo")
     with pytest.raises(ArgumentTypeError):
         arg_utils.path_exist(no_file)
-
 
 def test_check_positive_float_ok():
     assert 4.2 == arg_utils.positive_float("4.2")

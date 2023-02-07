@@ -32,6 +32,7 @@ def path_exist(file_path):
         argparse.ArgumentTypeError: If it is invalid
     """
     fp = Path(file_path)
+    print(fp)
     if not fp.exists():
         raise ArgumentTypeError(f"Path {file_path} is not a valid file path.")
 
