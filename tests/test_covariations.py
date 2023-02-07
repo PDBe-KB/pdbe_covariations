@@ -7,9 +7,9 @@ from Bio import SeqIO
 
 import multiprocessing
 import pytest
-from cov_pairs.utils.exceptions import CovariationsException
-from cov_pairs import covariations
-from cov_pairs.utils import path_utils
+from pdbe_covariations.utils.exceptions import CovariationsException
+from pdbe_covariations import covariations
+from pdbe_covariations.utils import path_utils
 
 threads = min(min(8, multiprocessing.cpu_count()), 8)
 
@@ -133,10 +133,10 @@ def test_get_covariation_pairs(args):
     name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
     
     with patch.object(covariations, "run_gremlin", return_value=file_paths):
-        cov_pairs = covariations.get_covariation_pairs("F5HCP3", sequence,args.out, args.threads)
-        print (cov_pairs)
-        assert cov_pairs
-        assert len(cov_pairs) > 100
+        pdbe_covariations = covariations.get_covariation_pairs("F5HCP3", sequence,args.out, args.threads)
+        print (pdbe_covariations)
+        assert pdbe_covariations
+        assert len(pdbe_covariations) > 100
 
-        pivot = cov_pairs[0]
+        pivot = pdbe_covariations[0]
         assert pivot == ["F5HCP3",24,"LEU","F5HCP3",39,"PRO",-0.0045671,0.539227]
