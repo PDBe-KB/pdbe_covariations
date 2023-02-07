@@ -129,8 +129,9 @@ def run_hhblits(input_file, unp_id, out, db, threads):
     Returns:
         str: Path to the file with the MSA
     """
-    out_file = out / path_utils.msa_file(unp_id)
-    log_file = out / path_utils.msa_log_file(unp_id)
+    out_file = os.path.join(out,path_utils.msa_file(unp_id))
+    log_file = os.path.join(out,path_utils.msa_log_file(unp_id))
+
 
     command = [
         HHBLITS,
@@ -186,9 +187,10 @@ def run_hhfilter(unp_id, out):
     Returns:
         str: Path to the filtered MSA
     """
-    input_file = out / path_utils.msa_file(unp_id)
-    out_file = out / path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE)
-    log_file = out / path_utils.msa_filtered_log_file(unp_id)
+    input_file = os.path.join(out,path_utils.msa_file(unp_id))
+    out_file = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
+    log_file = os.path.join(out,path_utils.msa_filtered_log_file(unp_id))
+
 
     command = [
         HHFILTER,
@@ -269,13 +271,13 @@ def run_gremlin(unp_id, out, threads):
     Returns:
         `tuple of str, str`: Path to the probability matrix and score matrix.
     """
-    filtered_msa = out / path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE)
+    filtered_msa = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
 
-    prob_path = out / path_utils.probability_file(unp_id)
-    score_path = out / path_utils.score_file(unp_id)
+    prob_path = os.path.join(out,path_utils.probability_file(unp_id))
+    score_path = os.path.join(out,path_utils.score_file(unp_id))
 
-    prob_log = out / path_utils.probability_log_file(unp_id)
-    score_log = out / path_utils.score_log_file(unp_id)
+    prob_log = os.path.join(out,path_utils.probability_log_file(unp_id))
+    score_log = os.path.join(out,path_utils.score_log_file(unp_id))
 
     score_cmd = [
         GREMLIN,
@@ -326,7 +328,8 @@ def get_covariation_info(unp_id, sequence, out, threads):
          #covariation_pairs,columns=["Residue A", "Residue B", "Score", "Probability"]
          covariation_pairs, columns=["uniprot_accession_a","uniprot_residue_index_a","uniprot_residue_label_a", "uniprot_accession_b","uniprot_residue_index_b","uniprot_residue_label_b", "covariation_score", "covariation_probability"]
     )
-    out_file = out / f"{unp_id}_cov.csv"
+    out_file = os.path.join(out,"{}_cov.csv".format(unp_id))
+    
     df[df["covariation_probability"] >= THRESHOLD].to_csv(out_file,index=False)
 
     logging.info(f"Covariations were written to: {out_file}")

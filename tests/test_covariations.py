@@ -91,7 +91,7 @@ def test_args_nok_wrong_treads(fasta_file, uniclust_db, tmpdir):
 def test_run_hhblits(args):
     # mock out_file content
     file_id = "foo"
-    out_file = Path(args.out, path_utils.msa_file(file_id))
+    out_file = os.path.join(args.out, path_utils.msa_file(file_id))
 
     with open(out_file, "w") as fp:
         fp.write("one\ntwo")
@@ -107,7 +107,7 @@ def test_run_hhfilter(args):
     file_name = path_utils.msa_filtered_file(
         file_id, covariations.IDENTITY, covariations.COVERAGE
     )
-    out_file = args.out / file_name
+    out_file = os.path.join(args.out, file_name)
 
     with open(out_file, "w") as fp:
         fp.write("one\ntwo")
