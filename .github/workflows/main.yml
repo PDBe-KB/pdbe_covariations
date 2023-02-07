@@ -28,8 +28,9 @@ jobs:
         make test
     - name: Upload coverage to Codecov
       if: github.ref == 'refs/heads/main'
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
+        directory: ./coverage
         file: ./coverage/cobertura-coverage.xml
         flags: unittests
         name: codecov-${{ env.PACKAGE_NAME }}
