@@ -1,9 +1,9 @@
 from setuptools import setup, find_namespace_packages
-import cov_pairs
+import pdbe_covariations
 
 setup(
-    name="cov_pairs",
-    version=cov_pairs.__version__,
+    name="pdbe_covariations",
+    version=pdbe_covariations.__version__,
     description="Package to calculate covariation pairs",
     project_urls={
         "Source code": "https://gitlab.ebi.ac.uk/pdbe/release/bioint",
@@ -28,7 +28,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "covariations=cov_pairs.covariations:main",
+            "covariations=pdbe_covariations.covariations:main",
         ]
     },
 )

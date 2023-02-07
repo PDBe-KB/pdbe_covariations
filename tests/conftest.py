@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-from cov_pairs import covariations
+from pdbe_covariations import covariations
 
 
 @pytest.fixture(scope="module")

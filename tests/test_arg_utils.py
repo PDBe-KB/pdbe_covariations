@@ -2,7 +2,7 @@ import os
 from argparse import ArgumentTypeError
 
 import pytest
-from cov_pairs.utils import arg_utils
+from pdbe_covariations.utils import arg_utils
 
 def test_path_exists_ok(test_data_dir):
     

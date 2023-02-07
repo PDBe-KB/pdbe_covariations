@@ -29,7 +29,7 @@ import os
 import subprocess
 import time
 
-import cov_pairs
+import pdbe_covariations
 import numpy
 import pandas
 
@@ -37,8 +37,8 @@ import Bio
 from Bio import SeqIO
 from Bio.SeqUtils import seq3
 
-from cov_pairs.utils.exceptions import CovariationsException
-from cov_pairs.utils import arg_utils, path_utils
+from pdbe_covariations.utils.exceptions import CovariationsException
+from pdbe_covariations.utils import arg_utils, path_utils
 
 # region mini config
 GREMLIN = "gremlin3"
@@ -84,7 +84,7 @@ def process_args(args, write_out_parameters=True):
     os.makedirs(args.out, exist_ok=True)
 
     if write_out_parameters:
-        logging.info(f"Running covariations pipeline v. {cov_pairs.__version__}")
+        logging.info(f"Running covariations pipeline v. {pdbe_covariations.__version__}")
         logging.info("Settings:")
         for k, v in vars(args).items():
             logging.info(f"  {k:25s}{v}")
