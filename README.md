@@ -3,10 +3,10 @@ Protein residue covariation pipeline
 
 ## Basic information
 
-The code in this repository runs a pipeline that calculates covariation pairs from protein sequence. 
+The code in this repository runs a pipeline that calculates covariation pairs from protein sequences. 
 
-The main steps of this pipeline: 
-1) Create multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
+The main steps of this pipeline are: 
+1) Create and filter multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
 2) Calculate covariation pairs using [Gremlin3](https://github.com/gjoni/gremlin3)
 
 ## Installation
