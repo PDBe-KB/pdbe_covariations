@@ -118,7 +118,7 @@ def test_run_hhfilter(args):
 
 
 def test_run_gremlin(args):
-    with patch.object(covariations, "execute_command"):
+    with patch.object(covariations, "execute_command_parallel"):
         covariations.run_gremlin("foobar", args.out, args.threads)
 
 
