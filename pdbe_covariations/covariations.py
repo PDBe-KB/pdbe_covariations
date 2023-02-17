@@ -328,7 +328,7 @@ def run_gremlin(unp_id, out, threads):
                 f"Error occured while running GREMLIN for sequence {unp_id}."
             )
     for p in procs:
-        p.communicate()
+        p.wait()
 
     return prob_path, score_path
 
