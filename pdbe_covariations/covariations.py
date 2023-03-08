@@ -72,6 +72,7 @@ def __check_binaries():
 
 
 def process_args(args, write_out_parameters=True):
+    
     """Preprocess application arguments for their further use.
 
     Args:
@@ -85,8 +86,8 @@ def process_args(args, write_out_parameters=True):
     os.makedirs(args.out, exist_ok=True)
 
     if write_out_parameters:
-        logging.info(f"Running covariations pipeline v. {pdbe_covariations.__version__}")
-        logging.info("Settings:")
+        #logging.info(f"Running covariations pipeline v. {pdbe_covariations.__version__}")
+        #logging.info("Settings:")
         for k, v in vars(args).items():
             logging.info(f"  {k:25s}{v}")
 
@@ -113,21 +114,36 @@ def execute_command(cmd, log_file=None):
 
     logging.debug(f"Finished in: {runtime_str}.")
     
-def execute_command_parallel(cmd, log_file=None):
+def execute_command_parallel(inputs):
     """Execute command and measure execution time                                                                                      
     Args:
         cmd (list of str): Execution arguments                                                                                         
     """
-    command = " ".join(cmd)
-    logging.debug(f"Running command: {command}")
-    start = time.perf_counter()
+    
+    for i in inputs:
+        cmd=i[0]
+        log_file=i[1]
+        try:
+            
+            command = " ".join(cmd)
+            logging.debug(f"Running command: {command}")
+            start = time.perf_counter()
 
-    log_file = open(log_file, "w") if log_file else subprocess.DEVNULL
-    procs = [ Popen(cmd, stderr=log_file, stdout=log_file) ]
-    runtime = time.perf_counter() - start
-    runtime_str = datetime.timedelta(seconds=runtime)
+            log_file = open(log_file, "w") if log_file else subprocess.DEVNULL
+            procs = [ Popen(cmd, stderr=log_file, stdout=log_file) ]
+            runtime = time.perf_counter() - start
+            runtime_str = datetime.timedelta(seconds=runtime)
 
-    logging.debug(f"Finished in: {runtime_str}.")
+            logging.debug(f"Finished in: {runtime_str}.")
+
+
+        except subprocess.CalledProcessError:
+            raise Exception(
+                f"Error occured while running GREMLIN for sequence {unp_id}."
+            )
+        
+    for p in procs:
+        p.wait()
     
     return procs
     
@@ -320,15 +336,9 @@ def run_gremlin(unp_id, out, threads):
 
     inputs = [(score_cmd, score_log), (prob_cmd, prob_log)]
 
-    for i in inputs:
-        try:
-            procs = execute_command_parallel(i[0], i[1])
-        except subprocess.CalledProcessError:
-            raise Exception(
-                f"Error occured while running GREMLIN for sequence {unp_id}."
-            )
-    for p in procs:
-        p.wait()
+
+    procs = execute_command_parallel(inputs)
+
 
     return prob_path, score_path
 
@@ -355,7 +365,7 @@ def get_covariation_info(unp_id, sequence, out, threads):
     logging.info(f"Covariations were written to: {out_file}")
 
 
-def run_covariations(input_file, out, db, threads, mode):
+def run_covariations(input_file, out, db, threads, mode, force=False):
     """Run covariations
 
     Args:
@@ -368,18 +378,27 @@ def run_covariations(input_file, out, db, threads, mode):
     unp_id = os.path.basename(input_file).split(".")[0]
     fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
     name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
-    
+
+    filtered_msa_file = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
+    msa_file =  os.path.join(out,path_utils.msa_file(unp_id))
     
     logging.info(f"Getting covariations for: {unp_id}")
 
-    if mode == "msa":
+    
+    if force :
         get_msa(input_file, unp_id, out, db, threads)
-
+        get_covariation_info(unp_id, sequence, out, threads)    
+    elif mode == "msa" :
+        get_msa(input_file, unp_id, out, db, threads)
     elif mode == "cov":
         get_covariation_info(unp_id,sequence, out, threads)
     else:
-        get_msa(input_file, unp_id, out, db, threads)
-        get_covariation_info(unp_id, sequence, out, threads)
+
+        if os.path.exists(msa_file) and os.path.exists(filtered_msa_file) :
+            get_covariation_info(unp_id, sequence, out, threads)
+        else:
+            get_msa(input_file, unp_id, out, db, threads)
+            get_covariation_info(unp_id, sequence, out, threads)
 
     logging.info("Finished. Time for beer now?")
 
@@ -431,7 +450,14 @@ def create_parser():
         help="Turn on debug information.",
         required=False,
     )
-
+    
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Always run msa calculation with hhblits/hhfilter",
+        required=False,
+    )
+    
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "-m",
@@ -449,14 +475,17 @@ def create_parser():
         dest="mode",
         help="Run covariations calculation from pre-existing MSA.",
     )
-    group.add_argument(
+    parser.add_argument(
         "-a",
         "--all",
         action="store_const",
         const="all",
         dest="mode",
-        help="Run full computation.",
+        help="Run full computation",
     )
+
+    
+    
     group.set_defaults(mode="all")
 
     return parser
@@ -473,7 +502,7 @@ def main():
 
     process_args(args)
 
-    run_covariations(args.input, args.out, args.db, args.threads, args.mode)
+    run_covariations(args.input, args.out, args.db, args.threads, args.mode,args.force)
 
 
 if __name__ == "__main__":
