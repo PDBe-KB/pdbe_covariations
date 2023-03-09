@@ -29,6 +29,7 @@ import os
 import subprocess
 from subprocess import Popen
 import time
+from multiprocessing import Pool
 
 import pdbe_covariations
 import numpy
@@ -96,12 +97,15 @@ def process_args(args, write_out_parameters=True):
 
 
 # region run external programs
-def execute_command(cmd, log_file=None):
+def execute_command(input):
     """Execute command and measure execution time
 
     Args:
         cmd (list of str): Execution arguments
     """
+    cmd=input[0]
+    log_file=input[1]
+    
     command = " ".join(cmd)
     logging.debug(f"Running command: {command}")
     start = time.perf_counter()
@@ -193,7 +197,8 @@ def run_hhblits(input_file, unp_id, out, db, threads):
     ]
 
     try:
-        execute_command(command, log_file)
+        cmd_input = [command, log_file]
+        execute_command(cmd_input)
     except subprocess.CalledProcessError as e:
         raise Exception(
             f"Generating MSA for input sequence {unp_id} failed with error: {str(e)}"
@@ -239,7 +244,8 @@ def run_hhfilter(unp_id, out):
     ]
 
     try:
-        execute_command(command, log_file)
+        cmd_input = [command, log_file]
+        execute_command(cmd_input)
     except subprocess.CalledProcessError as e:
         raise Exception(
             f"Filtering MSA for input sequence {unp_id} failed with error: {str(e)}"
@@ -336,8 +342,9 @@ def run_gremlin(unp_id, out, threads):
 
     inputs = [(score_cmd, score_log), (prob_cmd, prob_log)]
 
+    with Pool() as pool:
 
-    procs = execute_command_parallel(inputs)
+        pool.map(execute_command, inputs)
 
 
     return prob_path, score_path

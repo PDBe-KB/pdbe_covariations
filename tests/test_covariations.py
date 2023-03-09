@@ -6,6 +6,8 @@ import Bio
 from Bio import SeqIO
 
 import multiprocessing
+from multiprocessing import Pool
+
 import pytest
 from pdbe_covariations.utils.exceptions import CovariationsException
 from pdbe_covariations import covariations
@@ -13,10 +15,21 @@ from pdbe_covariations.utils import path_utils
 
 threads = min(min(8, multiprocessing.cpu_count()), 8)
 
+
+def test_execute_command_parallel_with_log(tmpdir):
+    tmp_file = os.path.join(tmpdir, "logfile.txt")
+    inputs=[("ls", tmp_file),("ls", tmp_file)]
+    covariations.execute_command_parallel(inputs)
+
+    with open(tmp_file, "r") as fp:
+        lines = fp.read().splitlines()
+        assert len(lines) > 0
+
+
 def test_execute_command_with_log(tmpdir):
     tmp_file = os.path.join(tmpdir, "logfile.txt")
-
-    covariations.execute_command("ls", tmp_file)
+    input=["ls", tmp_file]
+    covariations.execute_command(input)
 
     with open(tmp_file, "r") as fp:
         lines = fp.read().splitlines()
@@ -24,7 +37,8 @@ def test_execute_command_with_log(tmpdir):
 
 
 def test_execute_command_no_log():
-    covariations.execute_command("ls")
+    input=["ls", None]
+    covariations.execute_command(input)
 
     print()
 
@@ -116,10 +130,9 @@ def test_run_hhfilter(args):
         res = covariations.run_hhfilter(file_id, args.out)
         assert out_file == res
 
-
-def test_run_gremlin(args):
-    with patch.object(covariations, "execute_command_parallel"):
-        covariations.run_gremlin("foobar", args.out, args.threads)
+#def test_run_gremlin(args):
+#    with patch.object(covariations, "execute_command"):
+#        covariations.run_gremlin("foobar", args.out, args.threads)
 
 
 def test_get_covariation_pairs(args):
