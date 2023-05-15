@@ -430,7 +430,7 @@ def create_parser():
     parser.add_argument(
         "-d",
         "--db",
-        type=arg_utils.check_db,
+        #type=arg_utils.check_db,
         help="Path to the database of clustered sequences.",
         required=True,
     )
