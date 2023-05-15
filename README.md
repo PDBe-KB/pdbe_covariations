@@ -107,6 +107,13 @@ F5HCP3,24,LEU,F5HCP3,52,ALA,-0.0045682,0.516928
 F5HCP3,24,LEU,F5HCP3,56,TYR,-0.00456711,0.569487
 F5HCP3,24,LEU,F5HCP3,57,CYS,-0.00456711,0.671099
 ```
+## Test Example 
+
+Use demo database `pdbe_demo_db` to run calculate covariation_pairs for the fasta-formatted sequence F5HCP3 (files in directory 'example'):
+
+```
+covariations -i F5HCP3.fasta -d /pdbe_demo_db/pdbe_demo_db -o output_path
+```
 
 ## Versioning
 
