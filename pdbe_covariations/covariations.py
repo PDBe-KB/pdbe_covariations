@@ -39,37 +39,20 @@ import Bio
 from Bio import SeqIO
 from Bio.SeqUtils import seq3
 
+
 from pdbe_covariations.utils.exceptions import CovariationsException
 from pdbe_covariations.utils import arg_utils, path_utils
+from pdbe_covariations.utils.execute_command_utils import execute_command
+from pdbe_covariations.msa_utils import run_hhblits, run_hhfilter, run_hmmbuild, run_hmmsearch, convert_sto_a3m, convert_a3m_fasta
+from pdbe_covariations.pair_msas import run_pair_alignment
 
 # region mini config
 GREMLIN = "gremlin3"
-HHBLITS = "hhblits"
-HHFILTER = "hhfilter"
 
 IDENTITY = "90"
 COVERAGE = "75"
 THRESHOLD = 0.5  # Write out only those pairs with probability greated than 0.5
 
-
-# endregion mini config
-
-# region check args
-def __check_binaries():
-    """Check if all relevant binaries can be found in path
-
-    Raises:
-        Exception: If any of the binaries is not available
-    """
-    binaries = [HHBLITS, HHFILTER]
-
-    for b in binaries:
-        try:
-            subprocess.run([b, "-h"], check=True, stdout=subprocess.DEVNULL)
-        except FileNotFoundError:
-            raise CovariationsException(
-                f"Binary {b} was not found in the $PATH environment variable"
-            )
 
 
 def process_args(args, write_out_parameters=True):
@@ -92,177 +75,8 @@ def process_args(args, write_out_parameters=True):
         for k, v in vars(args).items():
             logging.info(f"  {k:25s}{v}")
 
-
-# endregion check args
-
-
-# region run external programs
-def execute_command(input):
-    """Execute command and measure execution time
-
-    Args:
-        cmd (list of str): Execution arguments
-    """
-    cmd=input[0]
-    log_file=input[1]
     
-    command = " ".join(cmd)
-    logging.debug(f"Running command: {command}")
-    start = time.perf_counter()
-
-    log_file = open(log_file, "w") if log_file else subprocess.DEVNULL
-    subprocess.run(cmd, check=True, stderr=log_file, stdout=log_file)
-
-    runtime = time.perf_counter() - start
-    runtime_str = datetime.timedelta(seconds=runtime)
-
-    logging.debug(f"Finished in: {runtime_str}.")
-    
-def execute_command_parallel(inputs):
-    """Execute command and measure execution time                                                                                      
-    Args:
-        cmd (list of str): Execution arguments                                                                                         
-    """
-    
-    for i in inputs:
-        cmd=i[0]
-        log_file=i[1]
-        try:
-            
-            command = " ".join(cmd)
-            logging.debug(f"Running command: {command}")
-            start = time.perf_counter()
-
-            log_file = open(log_file, "w") if log_file else subprocess.DEVNULL
-            procs = [ Popen(cmd, stderr=log_file, stdout=log_file) ]
-            runtime = time.perf_counter() - start
-            runtime_str = datetime.timedelta(seconds=runtime)
-
-            logging.debug(f"Finished in: {runtime_str}.")
-
-
-        except subprocess.CalledProcessError:
-            raise Exception(
-                f"Error occured while running GREMLIN for sequence {unp_id}."
-            )
-        
-    for p in procs:
-        p.wait()
-    
-    return procs
-    
-def run_hhblits(input_file, unp_id, out, db, threads):
-    """Run hhblits software to generate MSA.
-
-    Args:
-        input_file (str): Path to the input file with FASTA sequence.
-        unp_id (str): File name that is processed (usually UNP id.)
-        out (str): Path to the out directory
-        db (str): Path to the uniclust db.
-        threads (int): No of threads to be used
-
-    Raises:
-        Exception: If something goes wrong
-
-    Returns:
-        str: Path to the file with the MSA
-    """
-    out_file = os.path.join(out,path_utils.msa_file(unp_id))
-    log_file = os.path.join(out,path_utils.msa_log_file(unp_id))
-
-
-    command = [
-        HHBLITS,
-        "-cpu",
-        str(threads),
-        "-mact",
-        "0.35",
-        "-maxfilt",
-        "100000000",
-        "-neffmax",
-        "20",
-        "-nodiff",
-        "-realign_max",
-        "10000000",
-        "-n",
-        "4",
-        "-d",
-        db,
-        "-i",
-        str(input_file),
-        "-oa3m",
-        str(out_file),
-        "-o",
-        "/dev/null",  # otherwise a file with best aligning sequences is created
-    ]
-
-    try:
-        cmd_input = [command, log_file]
-        execute_command(cmd_input)
-    except subprocess.CalledProcessError as e:
-        raise Exception(
-            f"Generating MSA for input sequence {unp_id} failed with error: {str(e)}"
-        )
-
-    if not os.path.isfile(out_file):
-        raise IOError("MSA file was not created.")
-
-    with open(out_file, "r") as fp:
-        logging.info(f"There are {len(fp.read().splitlines())} sequences in the MSA.")
-
-    return out_file
-
-
-def run_hhfilter(unp_id, out):
-    """Runs hhfilter to filter out hits from MSA given a set of parameters.
-
-    Args:
-        unp_id (str): File name that is processed (usually UNP id).
-        out (str): Path to the out directory.
-
-    Raises:
-        Exception: If hhfilter software fails
-
-    Returns:
-        str: Path to the filtered MSA
-    """
-    input_file = os.path.join(out,path_utils.msa_file(unp_id))
-    out_file = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
-    log_file = os.path.join(out,path_utils.msa_filtered_log_file(unp_id))
-
-
-    command = [
-        HHFILTER,
-        "-id",
-        IDENTITY,
-        "-cov",
-        COVERAGE,
-        "-i",
-        str(input_file),
-        "-o",
-        str(out_file),
-    ]
-
-    try:
-        cmd_input = [command, log_file]
-        execute_command(cmd_input)
-    except subprocess.CalledProcessError as e:
-        raise Exception(
-            f"Filtering MSA for input sequence {unp_id} failed with error: {str(e)}"
-        )
-
-    with open(out_file, "r") as fp:
-        logging.info(
-            f"There are {len(fp.read().splitlines())} sequences in the filtered MSA."
-        )
-
-    if not os.path.isfile(out_file):
-        raise IOError("Filtered MSA not created.")
-
-    return out_file
-
-
-def get_covariation_pairs(unp_id,sequence,out,threads):
+def get_covariation_pairs(unp_id,input_file,sequence,out,threads):
     """Calculate residue pairs with covariation score and probability
     given the filtered MSA.
 
@@ -275,7 +89,8 @@ def get_covariation_pairs(unp_id,sequence,out,threads):
         `list of list of str`: Covariation pairs along with their score
         and probability.
     """
-    probability_path, score_path = run_gremlin(unp_id, out, threads)
+            
+    probability_path, score_path = run_gremlin(unp_id,input_file, out, threads)
 
     score = numpy.loadtxt(score_path)
     probability = numpy.loadtxt(probability_path)
@@ -287,7 +102,6 @@ def get_covariation_pairs(unp_id,sequence,out,threads):
     for i in range(sequence_length):
         for j in range(i + sequence_separation, sequence_length):
             if(probability[i, j]>=THRESHOLD):
-                #covariation_pairs.append([i + 1, j + 1,score[i, j], probability[i, j]])
                 res1=seq3(sequence[i]).upper()
                 res2=seq3(sequence[j]).upper()
                 covariation_pairs.append([unp_id, i + 1,res1,unp_id,j+1,res2, score[i, j], probability[i, j]])
@@ -297,7 +111,7 @@ def get_covariation_pairs(unp_id,sequence,out,threads):
     return covariation_pairs
 
 
-def run_gremlin(unp_id, out, threads):
+def run_gremlin(unp_id,input_file, out, threads):
     """Run Gremlin software to calculate covariation pairs
 
     Args:
@@ -311,7 +125,7 @@ def run_gremlin(unp_id, out, threads):
     Returns:
         `tuple of str, str`: Path to the probability matrix and score matrix.
     """
-    filtered_msa = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
+    #filtered_msa = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
 
     prob_path = os.path.join(out,path_utils.probability_file(unp_id))
     score_path = os.path.join(out,path_utils.score_file(unp_id))
@@ -324,7 +138,7 @@ def run_gremlin(unp_id, out, threads):
         "-t",
         str(threads),
         "-i",
-        str(filtered_msa),
+        str(input_file),
         "-o",
         str(score_path),
     ]
@@ -333,7 +147,7 @@ def run_gremlin(unp_id, out, threads):
         "-t",
         str(threads),
         "-i",
-        str(filtered_msa),
+        str(input_file),
         "-o",
         str(prob_path),
         "-R",
@@ -352,14 +166,23 @@ def run_gremlin(unp_id, out, threads):
 
 # endregion run external programs
 
+def get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads):
+    run_hmmbuild(unp_id_1,out)
+    run_hmmbuild(unp_id_2,out)
+
+    run_hmmsearch(unp_id_1,db_hmmer,out,threads)
+    run_hmmsearch(unp_id_2,db_hmmer,out,threads)
 
 def get_msa(input_file, unp_id, out, db, threads):
     run_hhblits(input_file, unp_id, out, db, threads)
     run_hhfilter(unp_id, out)
 
+def convert_to_a3m(unp_id_1,unp_id_2,hhlib_path,out):
+    convert_sto_a3m(unp_id_1,hhlib_path,out)
+    convert_sto_a3m(unp_id_2,hhlib_path,out)
 
-def get_covariation_info(unp_id, sequence, out, threads):
-    covariation_pairs = get_covariation_pairs(unp_id,sequence,out,threads)
+def get_covariation_info(unp_id,input_file, sequence, out, threads):
+    covariation_pairs = get_covariation_pairs(unp_id,input_file,sequence,out,threads)
     
     df = pandas.DataFrame(
          #covariation_pairs,columns=["Residue A", "Residue B", "Score", "Probability"]
@@ -371,44 +194,108 @@ def get_covariation_info(unp_id, sequence, out, threads):
 
     logging.info(f"Covariations were written to: {out_file}")
 
-
-def run_covariations(input_file, out, db, threads, mode, force=False):
+def run_covariations(input_file_list, out, db,db_hmmer, threads, mode,unp_ids,hhlib_path,force=False):
     """Run covariations
 
     Args:
-        input_file (str): Path to input structure
+        input_file (str): list of Paths to input sequences in fasta format
         out (Path): Path to the out directory
         db (str): Path to the uniclust db
+        db_hmmer : Path to the uniprot_trembl.fasta db 
         threads (int): Number of threads to be used for calculation
         mode (str): Mode to be used
+        unp_ids : List of UniProt accession ids
+        hhlib_path : path to HHSuite/script
+        force : force calculation of MSAs 
     """
-    unp_id = os.path.basename(input_file).split(".")[0]
-    fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
-    name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
+    if len(unp_ids)==1 and len(input_file_list)==1:
 
-    filtered_msa_file = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
-    msa_file =  os.path.join(out,path_utils.msa_file(unp_id))
+        unp_id = str(unp_ids[0])
+        input_file = str(input_file_list[0])
+        fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
+        name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
+
+        filtered_msa_file = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
+        msa_file =  os.path.join(out,path_utils.msa_file(unp_id))
     
-    logging.info(f"Getting covariations for: {unp_id}")
+        logging.info(f"Getting covariations for homomeric complex: {unp_id}")
 
     
-    if force :
-        get_msa(input_file, unp_id, out, db, threads)
-        get_covariation_info(unp_id, sequence, out, threads)    
-    elif mode == "msa" :
-        get_msa(input_file, unp_id, out, db, threads)
-    elif mode == "cov":
-        get_covariation_info(unp_id,sequence, out, threads)
-    else:
-
-        if os.path.exists(msa_file) and os.path.exists(filtered_msa_file) :
-            get_covariation_info(unp_id, sequence, out, threads)
-        else:
+        if force :
             get_msa(input_file, unp_id, out, db, threads)
-            get_covariation_info(unp_id, sequence, out, threads)
+            get_covariation_info(unp_id,filtered_msa_file,sequence, out, threads)    
+        elif mode == "msa" :
+            get_msa(input_file, unp_id, out, db, threads)
+        elif mode == "cov":
+            get_covariation_info(unp_id,filtered_msa_file,sequence, out, threads)
+        else:
 
-    logging.info("Finished. Time for beer now?")
+            if os.path.exists(msa_file) and os.path.exists(filtered_msa_file) :
+                get_covariation_info(unp_id,filtered_msa_file, sequence, out, threads)
+            else:
+                get_msa(input_file, unp_id, out, db, threads)
+                get_covariation_info(unp_id,filtered_msa_file,sequence, out, threads)
 
+        logging.info("Finished. Time for beer now?")
+        
+    if len(unp_ids)==2 and len(input_file_list)==2 :
+        
+        unp_id_1 = str(unp_ids[0])
+        unp_id_2 = str(unp_ids[1])
+        input_file_1=str(input_file_list[0])
+        input_file_2=str(input_file_list[1])
+        fasta_sequence_1 = list(SeqIO.parse(input_file_1, "fasta"))
+        fasta_sequence_2 = list(SeqIO.parse(input_file_2, "fasta"))
+        name_1, sequence_1 = fasta_sequence_1[0].id, str(fasta_sequence_1[0].seq)
+        name_2, sequence_2 = fasta_sequence_2[0].id, str(fasta_sequence_2[0].seq)
+        
+        filtered_msa_file_1 = os.path.join(out,path_utils.msa_filtered_file(unp_id_1, IDENTITY, COVERAGE))
+        filtered_msa_file_2 = os.path.join(out,path_utils.msa_filtered_file(unp_id_2, IDENTITY, COVERAGE))
+        msa_file_1 =  os.path.join(out,path_utils.msa_file(unp_id_1))
+        msa_file_2 =  os.path.join(out,path_utils.msa_file(unp_id_2))
+        msa_sto_file_1=os.path.join(out,path_utils.msa_sto_file(unp_id_1))
+        msa_sto_file_2=os.path.join(out,path_utils.msa_sto_file(unp_id_2))
+        msa_sto_to_a3m_file_1=os.path.join(out,path_utils.msa_sto_to_a3m_file(unp_id_1))
+        msa_sto_to_a3m_file_2=os.path.join(out,path_utils.msa_sto_to_a3m_file(unp_id_2))
+        pair_aligment_file= os.path.join(out,"paired.a3m")
+        
+        if force :
+            get_msa(input_file_1, unp_id_1, out, db, threads)
+            get_msa(input_file_2, unp_id_2, out, db, threads)
+            get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads)
+            convert_to_a3m(unp_id_1,unp_id_2,hhlib_path,out)
+            run_pair_alignment(msa_sto_to_a3m_file_1,msa_sto_to_a3m_file_2)
+            
+        else:
+            if not os.path.exists(msa_sto_file_1) or not os.path.exists(msa_sto_file_2):
+                
+                if os.path.exists(filtered_msa_file_1) and os.path.exists(filtered_msa_file_2) :
+                    
+                    get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads)
+                
+                else:
+                    get_msa(input_file_1, unp_id_1, out, db, threads)
+                    get_msa(input_file_2, unp_id_2, out, db, threads)
+                    get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads)
+                    
+            convert_to_a3m(unp_id_1,unp_id_2,hhlib_path,out)
+            run_pair_alignment(msa_sto_to_a3m_file_1,msa_sto_to_a3m_file_2)
+
+            unp_id="{}_{}".format(unp_id_1,unp_id_2)
+            paired_fasta = convert_a3m_fasta(unp_id,pair_aligment_file,hhlib_path,out)
+            fasta_sequence = list(SeqIO.parse(paired_fasta, "fasta"))
+            name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
+
+            print('Getting covariation pairs')
+            get_covariation_info(unp_id,pair_aligment_file,sequence, out, threads)
+            
+        logging.info(f"Getting covariations for heteromeric pair: {unp_id_1,unp_id_2}")
+        
+    if len(unp_ids)>2:
+        logging.error("Sorry, at the moment covariation analysis handles only pairs of uniprot ids")
+        
+    if len(unp_ids)!=len(input_file_list):
+        logging.error("Missing input files or uniprot ids, the number of input sequences should match the number of uniprot ids")
 
 def create_parser():
     """Set up a parser to get command line options.
@@ -423,15 +310,21 @@ def create_parser():
     parser.add_argument(
         "-i",
         "--input",
-        type=arg_utils.path_exist,
-        help="Input sequence in FASTA format.",
+        nargs="+",
+        help="List of input sequence(s) in FASTA format.",
+        required=True,
+    )
+    parser.add_argument(
+        "--unp_ids",
+        nargs="+",
+        help="List of accession ids (maximun 2 uniprot accession ids for current method)",
         required=True,
     )
     parser.add_argument(
         "-d",
         "--db",
         #type=arg_utils.check_db,
-        help="Path to the database of clustered sequences.",
+        help="Path to the uniclust database of clustered sequences.",
         required=True,
     )
     parser.add_argument(
@@ -442,7 +335,17 @@ def create_parser():
         help="Number of threads to be used for this calculation.",
         required=False,
     )
-
+    parser.add_argument(
+        "--db_hmmer",
+        help="Path to the database uniprot_trembl.fasta of clustered sequences.",
+        #default=argparse.SUPPRESS
+        required=False,
+    )
+    parser.add_argument(
+        "--hhlib_path",
+        help="Provide path to HHSuite/script to convert .sto to .a3m format",
+        required=False,
+    )
     parser.add_argument(
         "-o",
         "--out",
@@ -457,13 +360,14 @@ def create_parser():
         help="Turn on debug information.",
         required=False,
     )
-    
+
     parser.add_argument(
         "--force",
         action="store_true",
         help="Always run msa calculation with hhblits/hhfilter",
         required=False,
     )
+    
     
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -509,7 +413,17 @@ def main():
 
     process_args(args)
 
-    run_covariations(args.input, args.out, args.db, args.threads, args.mode,args.force)
+    db_hmmer= None
+    hhlib = None
+    
+    if len(args.unp_ids) > 1:
+        if not args.db_hmmer or not args.hhlib_path :
+            logging.error("add flag --db_hmmer and --hhlib_path ,required for covariation pipeline for heteromeric pairs")
+        else:
+            db_hmmer=args.db_hmmer
+            hhlib=args.hhlib_path
+            
+    run_covariations(args.input, args.out, args.db,db_hmmer, args.threads, args.mode,args.unp_ids,hhlib, args.force)
 
 
 if __name__ == "__main__":

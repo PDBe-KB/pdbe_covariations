@@ -53,3 +53,18 @@ def msa_filtered_log_file(unp_id):
 
 def covariations_file(unp_id):
     return f"{unp_id}_cov.csv"
+
+def msa_hmm_file(unp_id):
+    return f"{unp_id}_cov.hmm"
+
+def msa_hmm_log_file(unp_id):
+    return f"{unp_id}_msa_hmm.log"
+
+def msa_sto_file(unp_id):
+    return f"{unp_id}_cov.sto"
+def msa_sto_log_file(unp_id):
+    return f"{unp_id}_msa_sto.log"
+def msa_sto_to_a3m_file(unp_id):
+    return f"{unp_id}_cov.a3m"
+def msa_convert_format_log_file(unp_id):
+    return f"{unp_id}_cov.log"

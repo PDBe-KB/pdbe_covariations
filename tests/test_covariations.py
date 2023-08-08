@@ -10,7 +10,7 @@ from multiprocessing import Pool
 
 import pytest
 from pdbe_covariations.utils.exceptions import CovariationsException
-from pdbe_covariations import covariations
+from pdbe_covariations import covariations, msa_utils
 from pdbe_covariations.utils import path_utils
 
 threads = min(min(8, multiprocessing.cpu_count()), 8)
@@ -42,10 +42,6 @@ def test_execute_command_no_log():
 
     print()
 
-
-def test_check_binaries_ok():
-    with patch("subprocess.run"):
-        covariations.__check_binaries()
 
 
 #def test_binaries_not_available():
@@ -110,8 +106,8 @@ def test_run_hhblits(args):
     with open(out_file, "w") as fp:
         fp.write("one\ntwo")
 
-    with patch.object(covariations, "execute_command"):
-        res = covariations.run_hhblits(args.input, file_id, args.out, args.db, args.threads)
+    with patch.object("pdbe_covariations.utils.execute_command_utils.execute_command"):
+        res = msa_utils.run_hhblits(args.input, file_id, args.out, args.db, args.threads)
         assert out_file == res
 
 
@@ -126,8 +122,8 @@ def test_run_hhfilter(args):
     with open(out_file, "w") as fp:
         fp.write("one\ntwo")
 
-    with patch.object(covariations, "execute_command"):
-        res = covariations.run_hhfilter(file_id, args.out)
+    with patch.object(msa_utils, "execute_command"):
+        res = msa_utils.run_hhfilter(file_id, args.out)
         assert out_file == res
 
 #def test_run_gremlin(args):
