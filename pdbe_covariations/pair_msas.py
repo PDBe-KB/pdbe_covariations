@@ -60,7 +60,7 @@ def run_pair_alignment(input_a3m_msa1,input_a3m_msa2):
     # find pairs of uniprot ids which are separated by at most 10
     i,j = np.where(np.abs(hash1[:,None]-hash2[None,:]) < 10)
 
-    print("pairs found: ", i.shape[0])
+    logging.info("pairs found: {}".format(i.shape[0]))
 
     # save paired alignment
     
@@ -69,33 +69,13 @@ def run_pair_alignment(input_a3m_msa1,input_a3m_msa2):
         # here we assume that the pair of first sequences from the two MSAs
         # is already paired (we know that these two proteins do interact)
         f.write('>query\n%s%s\n'%(msa1[0],msa2[0]))
+        len_msa1=len(msa1[0])
+        len_msa2=len(msa2[0])
+        
         idx1 = []
         idx2 = []
         # save all other pairs
         for i,j in zip(idx1,idx2):
             f.write(">%s_%s\n%s%s\n"%(lab1[i],lab2[j],msa1[i+1],msa2[j+1]))
+    return len_msa1, len_msa2
 
-#def main():
-#    parser = argparse.ArgumentParser()
-#    parser.add_argument(
-#        "-msa1",
-#        "--input_a3m_msa1",
-#        help="Input CIF file",
-#        required=True,
-#    )
-#    parser.add_argument(
-#        "-msa2",
-#        "--input_a3m_msa2",
-#	help="Input CIF file",
-#        required=True,
-#    )
-
-#    args = parser.parse_args()
-    
-#    input_a3m_msa1=args.input_a3m_msa1
-#    input_a3m_msa2=args.input_a3m_msa2
-
-#    run_pair_alignment(input_a3m_msa1,input_a3m_msa2)
-    
-#if "__main__" in __name__:
-#    main()

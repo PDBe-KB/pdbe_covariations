@@ -39,6 +39,8 @@ import Bio
 from Bio import SeqIO
 from Bio.SeqUtils import seq3
 
+import tempfile
+
 
 from pdbe_covariations.utils.exceptions import CovariationsException
 from pdbe_covariations.utils import arg_utils, path_utils
@@ -76,11 +78,12 @@ def process_args(args, write_out_parameters=True):
             logging.info(f"  {k:25s}{v}")
 
     
-def get_covariation_pairs(unp_id,input_file,sequence,out,threads):
+def get_covariation_pairs(len_seq1,unp_ids,input_file,sequence,out,threads):
     """Calculate residue pairs with covariation score and probability
     given the filtered MSA.
 
     Args:
+        len_seq1 : Sequence length. If two sequences are paired, first sequence length.
         unp_id (str): File name that is processed (usually UNP id).
         out (str): Path to the out directory.
         threads (int): No of threads to be used.
@@ -89,7 +92,14 @@ def get_covariation_pairs(unp_id,input_file,sequence,out,threads):
         `list of list of str`: Covariation pairs along with their score
         and probability.
     """
-            
+    if len(unp_ids)==1:
+        unp_id = str(unp_ids[0])
+        unp_id_a = unp_id_b = unp_id
+    if len(unp_ids)==2:
+        unp_id_1 = str(unp_ids[0])
+        unp_id_2 = str(unp_ids[1])
+        unp_id="{}_{}".format(unp_id_1,unp_id_2)
+        
     probability_path, score_path = run_gremlin(unp_id,input_file, out, threads)
 
     score = numpy.loadtxt(score_path)
@@ -98,13 +108,19 @@ def get_covariation_pairs(unp_id,input_file,sequence,out,threads):
     covariation_pairs = []
     sequence_separation = 5  # to exclude short-range predictions
     sequence_length = score.shape[0]  # sequence length
-    
+
+        
     for i in range(sequence_length):
         for j in range(i + sequence_separation, sequence_length):
             if(probability[i, j]>=THRESHOLD):
                 res1=seq3(sequence[i]).upper()
                 res2=seq3(sequence[j]).upper()
-                covariation_pairs.append([unp_id, i + 1,res1,unp_id,j+1,res2, score[i, j], probability[i, j]])
+                if len(unp_ids)==2:
+                   if i+1 > len_seq1 : unp_id_a = unp_id_2
+                   else: unp_id_a = unp_id_1
+                   if j+1 > len_seq1 : unp_id_b	= unp_id_2
+                   else: unp_id_b = unp_id_1
+                covariation_pairs.append([unp_id_a, i + 1,res1,unp_id_b,j+1,res2, score[i, j], probability[i, j]])
 
     covariation_pairs.sort(key=lambda x: x[3], reverse=True)
 
@@ -167,25 +183,37 @@ def run_gremlin(unp_id,input_file, out, threads):
 # endregion run external programs
 
 def get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads):
-    run_hmmbuild(unp_id_1,out)
-    run_hmmbuild(unp_id_2,out)
 
-    run_hmmsearch(unp_id_1,db_hmmer,out,threads)
-    run_hmmsearch(unp_id_2,db_hmmer,out,threads)
+    inputs_hmmbuild = [(unp_id_1,out),(unp_id_2,out)]
+    
+    with Pool() as pool:
+        pool.starmap(run_hmmbuild,inputs_hmmbuild)
+
+    inputs_hmmsearch = [(unp_id_1,db_hmmer,out,threads),(unp_id_2,db_hmmer,out,threads)]
+
+    with Pool() as pool:
+        pool.starmap(run_hmmsearch,inputs_hmmsearch)
+        
 
 def get_msa(input_file, unp_id, out, db, threads):
     run_hhblits(input_file, unp_id, out, db, threads)
     run_hhfilter(unp_id, out)
 
 def convert_to_a3m(unp_id_1,unp_id_2,hhlib_path,out):
-    convert_sto_a3m(unp_id_1,hhlib_path,out)
-    convert_sto_a3m(unp_id_2,hhlib_path,out)
+    inputs = [(unp_id_1,hhlib_path,out),(unp_id_2,hhlib_path,out)]
+    with Pool() as pool:
+        pool.starmap(convert_sto_a3m,inputs)
 
-def get_covariation_info(unp_id,input_file, sequence, out, threads):
-    covariation_pairs = get_covariation_pairs(unp_id,input_file,sequence,out,threads)
+def get_covariation_info(len_seq1,unp_ids,input_file, sequence, out, threads):
+    covariation_pairs = get_covariation_pairs(len_seq1,unp_ids,input_file,sequence,out,threads)
+    
+    if len(unp_ids)==2:
+        unp_id="{}_{}".format(unp_ids[0],unp_ids[1])
+    else:
+        unp_id = str(unp_ids[0])
     
     df = pandas.DataFrame(
-         #covariation_pairs,columns=["Residue A", "Residue B", "Score", "Probability"]
+         
          covariation_pairs, columns=["uniprot_accession_a","uniprot_residue_index_a","uniprot_residue_label_a", "uniprot_accession_b","uniprot_residue_index_b","uniprot_residue_label_b", "covariation_score", "covariation_probability"]
     )
     out_file = os.path.join(out,"{}_cov.csv".format(unp_id))
@@ -198,10 +226,10 @@ def run_covariations(input_file_list, out, db,db_hmmer, threads, mode,unp_ids,hh
     """Run covariations
 
     Args:
-        input_file (str): list of Paths to input sequences in fasta format
+        input_file_list (str): list of Paths to input sequences in fasta format
         out (Path): Path to the out directory
         db (str): Path to the uniclust db
-        db_hmmer : Path to the uniprot_trembl.fasta db 
+        db_hmmer : Path to the uniprot_trembl.fasta db  
         threads (int): Number of threads to be used for calculation
         mode (str): Mode to be used
         unp_ids : List of UniProt accession ids
@@ -210,31 +238,31 @@ def run_covariations(input_file_list, out, db,db_hmmer, threads, mode,unp_ids,hh
     """
     if len(unp_ids)==1 and len(input_file_list)==1:
 
-        unp_id = str(unp_ids[0])
         input_file = str(input_file_list[0])
         fasta_sequence = list(SeqIO.parse(input_file, "fasta"))
         name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
-
+        len_seq1=len(sequence)
+        
         filtered_msa_file = os.path.join(out,path_utils.msa_filtered_file(unp_id, IDENTITY, COVERAGE))
         msa_file =  os.path.join(out,path_utils.msa_file(unp_id))
     
         logging.info(f"Getting covariations for homomeric complex: {unp_id}")
 
-    
+        
         if force :
             get_msa(input_file, unp_id, out, db, threads)
-            get_covariation_info(unp_id,filtered_msa_file,sequence, out, threads)    
+            get_covariation_info(len_seq1,unp_ids,filtered_msa_file,sequence, out, threads)    
         elif mode == "msa" :
             get_msa(input_file, unp_id, out, db, threads)
         elif mode == "cov":
-            get_covariation_info(unp_id,filtered_msa_file,sequence, out, threads)
+            get_covariation_info(len_seq1,unp_ids,filtered_msa_file,sequence, out, threads)
         else:
 
             if os.path.exists(msa_file) and os.path.exists(filtered_msa_file) :
-                get_covariation_info(unp_id,filtered_msa_file, sequence, out, threads)
+                get_covariation_info(len_seq1,unp_ids,filtered_msa_file, sequence, out, threads)
             else:
                 get_msa(input_file, unp_id, out, db, threads)
-                get_covariation_info(unp_id,filtered_msa_file,sequence, out, threads)
+                get_covariation_info(len_seq1,unp_ids,filtered_msa_file,sequence, out, threads)
 
         logging.info("Finished. Time for beer now?")
         
@@ -258,15 +286,38 @@ def run_covariations(input_file_list, out, db,db_hmmer, threads, mode,unp_ids,hh
         msa_sto_to_a3m_file_1=os.path.join(out,path_utils.msa_sto_to_a3m_file(unp_id_1))
         msa_sto_to_a3m_file_2=os.path.join(out,path_utils.msa_sto_to_a3m_file(unp_id_2))
         pair_aligment_file= os.path.join(out,"paired.a3m")
+
+        unp_id="{}_{}".format(unp_id_1,unp_id_2)
         
         if force :
-            get_msa(input_file_1, unp_id_1, out, db, threads)
-            get_msa(input_file_2, unp_id_2, out, db, threads)
+            #Run MSAs calculations with HHblits
+            inputs_msas = [(input_file_1, unp_id_1, out, db, threads),
+                           (input_file_2, unp_id_2, out, db, threads)]
+            with Pool() as pool:
+                pool.starmap(get_msa,inputs_msas)
+
+            #Calculate MSAs with HMMER from input MSA obtained with HHblits
+            
             get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads)
             convert_to_a3m(unp_id_1,unp_id_2,hhlib_path,out)
-            run_pair_alignment(msa_sto_to_a3m_file_1,msa_sto_to_a3m_file_2)
+
+            #Align MSAs and calculate length of sequences aligned
             
+            len_msa1, len_msa2 = run_pair_alignment(msa_sto_to_a3m_file_1,msa_sto_to_a3m_file_2)
+
+            #Calculate covariation pairs
+            
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                paired_fasta = convert_a3m_fasta(unp_id,pair_aligment_file,hhlib_path,tmp_dir)
+                fasta_sequence = list(SeqIO.parse(paired_fasta, "fasta"))
+                name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
+                
+                logging.info(f"Getting covariations for heteromeric pair: {unp_id_1,unp_id_2}")
+                get_covariation_info(len_msa1,unp_ids,pair_aligment_file,
+                                     sequence, out, threads)
         else:
+            #If MSAs exist, skip MSA calculations and compute covariation pairs
+            
             if not os.path.exists(msa_sto_file_1) or not os.path.exists(msa_sto_file_2):
                 
                 if os.path.exists(filtered_msa_file_1) and os.path.exists(filtered_msa_file_2) :
@@ -274,22 +325,24 @@ def run_covariations(input_file_list, out, db,db_hmmer, threads, mode,unp_ids,hh
                     get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads)
                 
                 else:
-                    get_msa(input_file_1, unp_id_1, out, db, threads)
-                    get_msa(input_file_2, unp_id_2, out, db, threads)
+                    inputs_msas=[(input_file_1, unp_id_1, out, db, threads),
+                                 (input_file_2, unp_id_2, out, db, threads)]
+                    
+                    with Pool() as pool:
+                        pool.starmap(get_msa,inputs_msas)
+
                     get_msas_hmmer(unp_id_1,unp_id_2, out, db_hmmer, threads)
                     
             convert_to_a3m(unp_id_1,unp_id_2,hhlib_path,out)
-            run_pair_alignment(msa_sto_to_a3m_file_1,msa_sto_to_a3m_file_2)
-
-            unp_id="{}_{}".format(unp_id_1,unp_id_2)
-            paired_fasta = convert_a3m_fasta(unp_id,pair_aligment_file,hhlib_path,out)
-            fasta_sequence = list(SeqIO.parse(paired_fasta, "fasta"))
-            name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
-
-            print('Getting covariation pairs')
-            get_covariation_info(unp_id,pair_aligment_file,sequence, out, threads)
+            len_msa1, len_msa2 = run_pair_alignment(msa_sto_to_a3m_file_1,msa_sto_to_a3m_file_2)
             
-        logging.info(f"Getting covariations for heteromeric pair: {unp_id_1,unp_id_2}")
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                paired_fasta = convert_a3m_fasta(unp_id,pair_aligment_file,hhlib_path,tmp_dir)
+                fasta_sequence = list(SeqIO.parse(paired_fasta, "fasta"))
+                name, sequence = fasta_sequence[0].id, str(fasta_sequence[0].seq)
+
+                logging.info(f"Getting covariations for heteromeric pair: {unp_id_1,unp_id_2}")
+                get_covariation_info(len_msa1,unp_ids,pair_aligment_file,sequence, out, threads)
         
     if len(unp_ids)>2:
         logging.error("Sorry, at the moment covariation analysis handles only pairs of uniprot ids")
