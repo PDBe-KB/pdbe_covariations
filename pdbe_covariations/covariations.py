@@ -345,7 +345,7 @@ def run_covariations(input_file_list, out, db,db_hmmer, threads, mode,unp_ids,hh
                 get_covariation_info(len_msa1,unp_ids,pair_aligment_file,sequence, out, threads)
         
     if len(unp_ids)>2:
-        logging.error("Sorry, at the moment covariation analysis handles only pairs of uniprot ids")
+        logging.error("Sorry, covariation analysis handles only pairs of uniprot ids")
         
     if len(unp_ids)!=len(input_file_list):
         logging.error("Missing input files or uniprot ids, the number of input sequences should match the number of uniprot ids")
