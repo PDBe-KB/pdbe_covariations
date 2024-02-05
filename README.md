@@ -3,18 +3,20 @@ Protein residue covariation pipeline
 
 ## Basic information
 
-The code in this repository runs a pipeline that calculates covariation pairs from protein sequences. 
+The code in this repository runs a pipeline that calculates covariation pairs from protein sequences for homomeric and heteromeric complexes. 
 
 The main steps of this pipeline are: 
-1) Create and filter multiple sequence aligment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
-2) Calculate covariation pairs using [Gremlin3](https://github.com/gjoni/gremlin3)
+1) Create and filter multiple sequence alignment (MSA) using [HHSuite](https://github.com/soedinglab/hh-suite)
+2) If two sequences are provided (heteromeric complexes), it creates a multiple sequence alignment using [HMMER](http://hmmer.org)
+3) Builds a paired MSA from individual MSAs of two proteins.
+4) Calculates covariation pairs using [Gremlin3](https://github.com/gjoni/gremlin3)
 
 ## Installation
 
 ```
-git clone https://github.com/PDBe-KB/covariation_pairs
+git clone https://github.com/PDBe-KB/pdbe_covariations
 
-cd covariation-pairs
+cd pdbe_covariations
 
 python setup.py install
 ```
@@ -25,6 +27,8 @@ The process runs the packages listed below as subprocesses and requires a-priori
 
 HHsuite   https://github.com/soedinglab/hh-suite
 
+HMMER     http://hmmer.org
+
 Gremlin3  https://github.com/gjoni/gremlin3
 
 The process requires a path to a database with clustered sequences, used for MSA in HH-suite. We use the Uniclust database by default:
@@ -33,8 +37,12 @@ Uniclust - https://uniclust.mmseqs.com/
 
 The process requires environment variables for binaries hhblits, hhfilter and gremlin3 (HHsuite and Gremlin3), which can be set in the path:
 
+The process for two sequences (heteromeric complexes) requires a path to a database of [uniprot sequences](https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz)
+
+The process for two sequences (heteromeric complexes) also requires environment variables for binaries hmmbuild, hmmsearch and a path to the HHLIB script reformat.pl to convert an alignment from sto to a3m format. 
+
 ```
-PATH="$PATH:/your_path/hh-suite/build/bin:$PATH:/your_path/gremlin3/bin"
+PATH="$PATH:/your_path/hh-suite/build/bin:$PATH:/your_path/gremlin3/bin:$PATH:/your_path/hmmer/bin
 
 ```
 Other dependencies can be installed with:
@@ -56,23 +64,34 @@ pre-commit install
 
 ## Usage
 
-After installing the package, the `covariation` module can be run in terminal as:
+After installing the package, the `covariations` module can be run in terminal as:
+
+Homomeric pipeline:
 
 ```
-covariation -i fasta_input/MSA_input -d clustered_sequences_database -t no_threads -o output_path
+covariations -i fasta_input/MSA_input --unp_ids UNP_ACC_IDs -d clustered_sequences_database -t no_threads -o output_path
 ```
+Heteromeric pipeline:
 
+```
+covariations -i two fasta_inputs/MSA_inputs --unp_ids UNP_ACC_IDs -d clustered_sequences_database --db_hmmer uniprot sequences database --hhlib_path path_to_reformat_script -t no_threads -o output_path
+```
 Required:
+
 ```
--i / --input : Path to the input file with FASTA sequence or file with MSA  
--d /--db     : Path to the database of clustered sequences
+-i / --input : List of input sequence(s) in FASTA format or MSAs. Provide the paths to the input files.
+--unp_ids    : List of accession IDs (maximum 2 UniProt accession ids for current method)
+-d /--db     : Path to the uniclust database of clustered sequences
 -o           : Output directory 
 ```
 
 Optional:
 
 ```
+--db_hmmer  : Path to the database uniprot_trembl.fasta of clustered sequences (Needed for heteromeric pairs)
+--hhlib_path: Provide path to HHSuite/script to convert .sto to .a3m format
 --debug     : Turn on debug information
+--force     : Always run msa calculation with hhblits/hhfilter (homomeric sequence) and HMMER (for heteromeric sequences)
 -m / --msa  : Run MSA only
 -t          : No. of threads for calculation
 -c / --cov  : Run covariations calculation from pre-existing MSA
@@ -81,11 +100,11 @@ Optional:
 
 ## Overview of the process
 
-1. The process first reads an input file which contains a sequence in FASTA format for a UniProt accession. The input file can also be a pre-existing MSA:
-   - UNP_acc.fasta  (the name of the file UNP_ACC must be the UniProt accession number)
-   - UNP_acc.a3m (pre-existing MSA file, the file must be named as the UniProt accession number UNP_acc)
-   
-2. Next, if -c flag is not used,  the process runs `hhblits` to create an MSA and generates a file:
+1. The process first reads a list of input files (max. two sequences), each file contains a sequence in FASTA format for a UniProt accession. The input file can also be a list of pre-existing MSAs:
+   - UNP_acc.fasta  
+   - UNP_acc.a3m (pre-existing MSA file)
+2. The process also reads a list of UniProt accession ids  (maximum 2 accession IDs) 
+2. Next, if -c flag is not used or the MSA file is not provided, the process runs `hhblits` to create an MSA and generates a file:
    - UNP_acc.a3m (where the name of the file UNP_acc is the UniProt accession number)
 3. Next step, the process runs `hhfilter` to filter out hits from the MSA and generates a new file:
    - UNP_acc_IDENTITY_COVERAGE.a3m (file name: UniProt id, identity, coverage)
