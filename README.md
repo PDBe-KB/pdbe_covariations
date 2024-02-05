@@ -98,33 +98,41 @@ Optional:
 -a / --all  : Run full computation (default)
 ```
 
+
 ## Overview of the process
 
 1. The process first reads a list of input files (max. two sequences), each file contains a sequence in FASTA format for a UniProt accession. The input file can also be a list of pre-existing MSAs:
    - UNP_acc.fasta  
    - UNP_acc.a3m (pre-existing MSA file)
-2. The process also reads a list of UniProt accession ids  (maximum 2 accession IDs) 
-2. Next, if -c flag is not used or the MSA file is not provided, the process runs `hhblits` to create an MSA and generates a file:
-   - UNP_acc.a3m (where the name of the file UNP_acc is the UniProt accession number)
-3. Next step, the process runs `hhfilter` to filter out hits from the MSA and generates a new file:
-   - UNP_acc_IDENTITY_COVERAGE.a3m (file name: UniProt id, identity, coverage)
-6. Then, the process runs `gremlin3` to calculate covariation pairs and outputs two files:
-   - UNP_ACC_prob.txt (where UNP_ACC refers to the UniProt id)
-   - UNP_ACC_score.txt (where UNP_ACC refers to the UniProt id)
-7. Finally, the process reads through scores and probabilities files and outputs a CSV file with the covariation pairs (with probability larger than 0.5):
-   - UNP_ACC_cov.csv (UNP_ACC: UniProt id)
-   
+2. The process also reads a list of UniProt accession IDs  (max. 2 uniprot accession IDs) 
+3. Next, if flag -force is not used or the MSAs are not provided, the process runs `hhblits` to create MSAs using the uniclust sequence database and generates files:
+   - UNP_acc.a3m (where the name of the file UNP_acc is the UniProt accession number for each ID in the list)
+4. Next step, the process runs `hhfilter` to filter out hits from the MSAs and generates new files:
+   - UNP_acc_IDENTITY_COVERAGE.a3m (file name: UniProt id, identity, coverage. One file per accession ID)
+5. If two Uniprot accession IDs are provided, the process will use hhblits MSAs as inputs and run HMMER to search in the uniprot sequences database and calculate profiles and MSAs:
+   {UNP_id}_cov.hmm (profile built with hmmbuild, one file per uniprot accession ID is generated)
+   {unp_id}_cov.sto  (MSA file created using HMMER. One file per uniprot accession ID is generated)
+8. If two Uniprot accession IDs are provided, the process will use the script reformat.py to change MSAs formats from .sto to .a3m and compute a paired MSA from the individulal MSAs:
+   paired.a3m (paired MSA file)
+9. Then, the process runs `gremlin3` using the MSA in a3m format to calculate covariation pairs and outputs two files:
+   - UNP_ACC_prob.txt   Where UNP_ACC refers to the UniProt id. The file contains the estimated probabilities of two residues to be in contact within 8A respectively)
+   - UNP_ACC_score.txt  Where UNP_ACC refers to the UniProt id. The file contains the coevolutionary score [APC](https://journals.aps.org/pre/pdf/10.1103/PhysRevE.87.012707)
+10. Finally, the process reads through scores and probabilities files and outputs a CSV file with the covariation pairs (with probability larger than 0.5):
+   - UNP_ACC_cov.csv (UNP_ACC: UniProt id for a single ID provided)
+OR
+   - UNP_ACC_1_UNP_ACC_2_cov.csv (Output file for two Uniprot accession IDs provided)
+   - 
 ## Expected output CSV file
 
-The output CSV file looks as follows:
+The output CSV file for looks as follows:
+
 ```
 uniprot_accession_a,uniprot_residue_index_a,uniprot_residue_label_a,uniprot_accession_b,uniprot_residue_index_b,uniprot_residue_label_b,covariation_score,covariation_probability
-F5HCP3,24,LEU,F5HCP3,39,PRO,-0.0045671,0.539227
-F5HCP3,24,LEU,F5HCP3,41,TRP,-0.0045671,0.695802
-F5HCP3,24,LEU,F5HCP3,46,TYR,-0.0045671,0.569487
-F5HCP3,24,LEU,F5HCP3,52,ALA,-0.0045682,0.516928
-F5HCP3,24,LEU,F5HCP3,56,TYR,-0.00456711,0.569487
-F5HCP3,24,LEU,F5HCP3,57,CYS,-0.00456711,0.671099
+P26789,1,MET,P26790,58,ALA,5.64555e-05,0.794589
+P26789,1,MET,P26790,61,PHE,5.67821e-05,0.510565
+P26789,1,MET,P26790,65,PHE,5.67821e-05,0.510565
+P26789,23,VAL,P26790,77,VAL,5.67719e-05,0.599517
+
 ```
 ## Test Example 
 
