@@ -23,7 +23,7 @@ python setup.py install
 
 ## Dependencies
 
-The process runs the packages listed below as subprocesses and requires a-priori compilation of:
+The process runs the packages listed below as subprocesses and requires the compilation of:
 
 HHsuite   https://github.com/soedinglab/hh-suite
 
@@ -39,10 +39,17 @@ The process requires environment variables for binaries hhblits, hhfilter and gr
 
 The process for two sequences (heteromeric complexes) requires a path to a database of [uniprot sequences](https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz)
 
-The process for two sequences (heteromeric complexes) also requires environment variables for binaries hmmbuild, hmmsearch and a path to the HHLIB script reformat.pl to convert an alignment from sto to a3m format. 
+The process for two sequences (heteromeric complexes) also requires environment variables for binaries hmmbuild, hmmsearch 
 
 ```
 PATH="$PATH:/your_path/hh-suite/build/bin:$PATH:/your_path/gremlin3/bin:$PATH:/your_path/hmmer/bin
+
+```
+
+For a list of two sequences (heteromeric), the process uses a path to the HHLIB script reformat.pl. This is used to convert an alignment from sto to a3m format. The script can be found in the [hh-suite](https://github.com/soedinglab/hh-suite) package, in the following path:
+
+```
+/your_path/hh-suite/scripts/reformat.pl
 
 ```
 Other dependencies can be installed with:
@@ -121,7 +128,7 @@ Optional:
    - UNP_ACC_cov.csv (UNP_ACC: UniProt id for a single ID provided)
 OR
    - UNP_ACC_1_UNP_ACC_2_cov.csv (Output file for two Uniprot accession IDs provided)
-   - 
+     
 ## Expected output CSV file
 
 The output CSV file for looks as follows:
